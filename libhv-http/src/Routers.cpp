@@ -1,6 +1,7 @@
 #include "Routers.hpp"
 
-nlohmann::json users;
+std::map<int64_t, nlohmann::json> users;
+int64_t count = 0;
 
 void route::RegisterResources(hv::HttpService &router)
 {
@@ -12,14 +13,8 @@ void route::RegisterResources(hv::HttpService &router)
         try
         {
             request = nlohmann::json::parse(req->body);
-
-            for (auto &user : users)
-            {
-                if (request["id"].get<int>() == user["id"].get<int>())
-                    throw std::exception();
-            }
-
-            users.push_back(request); 
+            request["id"] = count;
+            users[count++] = request;
             response["msg"] = "User added successfully";
         }
         catch(const std::exception& e)
@@ -44,15 +39,11 @@ void route::RegisterResources(hv::HttpService &router)
         {
             int userId = std::stoi(req->GetParam("userId"));
             
-            for (auto &user : users)
+            if (users.find(userId) != users.end())
             {
-                if (user["id"].get<int>() == userId){
-                    response["data"] = user;
-                    break;
-                }
+                response = users[userId];
             }
-            
-            if (response.empty())
+            else
             {
                 response["error"] = "User not found";
                 resp->SetBody(response.dump());
@@ -79,10 +70,21 @@ void route::RegisterResources(hv::HttpService &router)
     {
         nlohmann::json response;
         try{
-            if (!users.empty())
-                response["data"] = users;
+            if (users.empty())
+            {
+                nlohmann::json userJson;
+                userJson["data"] = "";
+                response.push_back(userJson);
+            }
             else
-                response["msg"] = "There are no users";
+            {    
+                for (auto &user : users)
+                {
+                    nlohmann::json userJson;
+                    userJson["data"] = user.second;
+                    response.push_back(userJson);
+                }
+            }
         }
         catch(const std::exception& e)
         {
@@ -106,14 +108,9 @@ void route::RegisterResources(hv::HttpService &router)
         {
             int userId = std::stoi(req->GetParam("userId"));
             
-            auto it = users.begin();
-            for(; it != users.end(); ++it) {
-                if(it->at("id") == userId)
-                    break;
-            }
-
-            if(it != users.end()){
-                users.erase(it);
+            if (users.find(userId) != users.end())
+            {
+                users.erase(userId);
                 response["msg"] = "User deleted successfully";
             }
             else{
