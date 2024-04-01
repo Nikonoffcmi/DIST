@@ -1,7 +1,9 @@
 #include "Routers.hpp"
+#include <mutex> 
 
 std::map<int64_t, nlohmann::json> users;
 int64_t count = 0;
+std::mutex my_mutex;
 
 void route::RegisterResources(hv::HttpService &router)
 {
@@ -9,6 +11,7 @@ void route::RegisterResources(hv::HttpService &router)
     {
         nlohmann::json request;
         nlohmann::json response;
+        std::unique_lock<std::mutex> my_lock(my_mutex);
 
         try
         {
@@ -27,13 +30,14 @@ void route::RegisterResources(hv::HttpService &router)
 
         resp->SetBody(response.dump());
         resp->content_type = APPLICATION_JSON;
-
+        my_lock.unlock();
         return 200;
     });
 
     router.GET("/user/{userId}", [](HttpRequest *req, HttpResponse *resp)
     {
         nlohmann::json response;
+        std::unique_lock<std::mutex> my_lock(my_mutex);
 
         try
         {
@@ -62,6 +66,7 @@ void route::RegisterResources(hv::HttpService &router)
         
         resp->SetBody(response.dump());
         resp->content_type = APPLICATION_JSON;
+        my_lock.unlock();
 
         return 200;
     });
@@ -69,6 +74,8 @@ void route::RegisterResources(hv::HttpService &router)
     router.GET("/users", [](HttpRequest *req, HttpResponse *resp)
     {
         nlohmann::json response;
+        std::unique_lock<std::mutex> my_lock(my_mutex);
+
         try{
             if (users.empty())
             {
@@ -96,6 +103,7 @@ void route::RegisterResources(hv::HttpService &router)
 
         resp->SetBody(response.dump());
         resp->content_type = APPLICATION_JSON;
+        my_lock.unlock();
 
         return 200;
     });
@@ -103,6 +111,7 @@ void route::RegisterResources(hv::HttpService &router)
     router.Delete("/user/{userId}", [](HttpRequest *req, HttpResponse *resp)
     {
         nlohmann::json response;
+        std::unique_lock<std::mutex> my_lock(my_mutex);
 
         try
         {
@@ -130,7 +139,8 @@ void route::RegisterResources(hv::HttpService &router)
 
         resp->SetBody(response.dump());
         resp->content_type = APPLICATION_JSON;
-
+        my_lock.unlock();
+        
         return 200;
     });
 }
