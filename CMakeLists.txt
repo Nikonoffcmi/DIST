@@ -1,11 +1,9 @@
 cmake_minimum_required(VERSION 3.0)
-project(libhv-http)
+project(http-server)
 
-set(TARGET_NAME "libhv-http")
+set(TARGET_NAME "http-server")
 
 set(LIBHV_INCLUDE ${PROJECT_BINARY_DIR}/contrib/libhv/include/hv)
-
-find_package(OpenSSL REQUIRED)
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/contrib)
 
@@ -29,5 +27,4 @@ include_directories(${SOURCE_DIR_HEADER})
 include_directories(${LIBHV_INCLUDE})
     
 add_executable(${TARGET_NAME} ${SOURCES})
-target_link_libraries(${TARGET_NAME} ${OPENSSL_LIBRARIES})
 target_link_libraries(${TARGET_NAME} hv_static)

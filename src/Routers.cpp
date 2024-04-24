@@ -1,13 +1,16 @@
 #include "Routers.hpp"
+#include "Utility.hpp"
 #include <mutex> 
 
 struct User{
     uint64_t id;
     std::string name;
     std::string info;
+    std::string password;
+    Role role;
 };
 
-std::map<uint64_t, User> users;
+std::unordered_map<uint64_t, User> users;
 uint64_t count = 0;
 std::mutex my_mutex;
 
@@ -21,10 +24,33 @@ void route::RegisterResources(hv::HttpService &router)
 
         try
         {
-            request = nlohmann::json::parse(req->body);
-            if (request.contains("name") && request.contains("info"))
+            User user;
+            auto basic_auth = req->GetHeader("Authorization");
+
+            if (!basic_auth.empty())
             {
-                User user{count, request["name"].get<std::string>(), request["info"].get<std::string>()};
+                auto splited_header = utils::Split(basic_auth, " ");
+
+                if (splited_header.size() == 2 && splited_header.front() == "Basic")
+                {
+                    auto decode = utils::DecodeBase64(splited_header.back());
+                    auto splited_auth = utils::Split(decode, ":");
+
+                    if (splited_auth.size() == 2)
+                    {
+                        std::cout << splited_auth.front() << " : " << splited_auth.back() << std::endl;
+                        user.name = splited_auth.front();
+                        user.password = splited_auth.back();
+                    }
+                }
+            }
+
+            request = nlohmann::json::parse(req->body);
+            if (request.contains("Role") && request.contains("info"))
+            {
+                user.info = request["info"].get<std::string>();
+                user.role = request["Role"].get<Role>();
+                user.id = count;
                 users[count++] = user;
             }
             else
@@ -42,7 +68,6 @@ void route::RegisterResources(hv::HttpService &router)
 
         resp->SetBody(response.dump());
         resp->content_type = APPLICATION_JSON;
-        my_lock.unlock();
         return 200;
     });
 
@@ -58,8 +83,8 @@ void route::RegisterResources(hv::HttpService &router)
             if (users.find(userId) != users.end())
             {
                 response["id"] = users[userId].id;
-                response["name"] = users[userId].info;
-                response["info"] = users[userId].name;
+                response["name"] = users[userId].name;
+                response["info"] = users[userId].info;
             }
             else
             {
@@ -80,7 +105,6 @@ void route::RegisterResources(hv::HttpService &router)
         
         resp->SetBody(response.dump());
         resp->content_type = APPLICATION_JSON;
-        my_lock.unlock();
 
         return 200;
     });
@@ -103,8 +127,8 @@ void route::RegisterResources(hv::HttpService &router)
                 {
                     nlohmann::json userJson;
                     userJson["id"] = user.second.id;
-                    userJson["name"] = user.second.info;
-                    userJson["info"] = user.second.name;
+                    userJson["name"] = user.second.name;
+                    userJson["info"] = user.second.info;
                     response.push_back(userJson);
                 }
             }
@@ -119,7 +143,6 @@ void route::RegisterResources(hv::HttpService &router)
 
         resp->SetBody(response.dump());
         resp->content_type = APPLICATION_JSON;
-        my_lock.unlock();
 
         return 200;
     });
@@ -155,7 +178,6 @@ void route::RegisterResources(hv::HttpService &router)
 
         resp->SetBody(response.dump());
         resp->content_type = APPLICATION_JSON;
-        my_lock.unlock();
         
         return 200;
     });
