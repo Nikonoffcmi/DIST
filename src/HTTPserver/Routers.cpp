@@ -6,7 +6,7 @@ struct User{
     std::string name;
     std::string password;
     std::string info;
-    Role role;
+    std::string role;
 };
 
 std::unordered_map<std::string, User> users;
@@ -46,13 +46,15 @@ void route::RegisterResources(hv::HttpService &router)
                 else
                     throw std::exception();
             }
+            else
+                throw std::exception();
 
             request = nlohmann::json::parse(req->body);
             if (request.contains("name") && request.contains("Role") && request.contains("info"))
             {
                 user.name = request["name"].get<std::string>();
                 user.info = request["info"].get<std::string>();
-                user.role = request["Role"].get<Role>();
+                user.role = request["Role"].get<std::string>();
                 users[login] = user;
             }
             else
@@ -155,7 +157,7 @@ void route::RegisterResources(hv::HttpService &router)
                 for (auto &user : users)
                 {
                     nlohmann::json userJson;
-                    if (!login.empty() && users[login].role == Role::Admin)
+                    if (!login.empty() && users[login].role == "admin")
                         userJson["login"] = user.first;
                     userJson["name"] = user.second.name;
                     userJson["info"] = user.second.info;
@@ -219,16 +221,22 @@ void route::RegisterResources(hv::HttpService &router)
 
             std::string userId = req->GetParam("userId");
             
-            if (users.find(userId) != users.end() && (login == userId || users[login].role == Role::Admin))
+            if (users.find(userId) == users.end()){
+                response["error"] = "User not found";
+                resp->SetBody(response.dump());
+                resp->content_type = APPLICATION_JSON;
+                return 404;
+            } 
+            if (login == userId || users[login].role == "admin")
             {
                 users.erase(userId);
                 response["msg"] = "User deleted successfully";
             }
             else{
-                response["error"] = "User not found";
+                response["error"] = "Access denied";
                 resp->SetBody(response.dump());
                 resp->content_type = APPLICATION_JSON;
-                return 404;
+                return 403;
             }
         }
         catch(const std::exception& e)
@@ -273,7 +281,8 @@ void route::RegisterResources(hv::HttpService &router)
                     if (splitted_auth.size() == 2)
                     {
                         login = splitted_auth.front();
-                        pass = splitted_auth.back();
+                        if (users[login].password != splitted_auth.back())
+                            throw std::exception();
                     }
                     else
                         throw std::exception();
@@ -290,25 +299,33 @@ void route::RegisterResources(hv::HttpService &router)
             }
 
             request = nlohmann::json::parse(req->body);
-            std::string corr_user;
-            if (request.contains("corr_user"))
-                corr_user == request["corr_user"].get<std::string>();
-            else
-                throw new std::exception();
 
-            if (users.find(userId) != users.end()
-            && request.contains("name") && request.contains("Role") && request.contains("info")
-            && (corr_user == userId || users[corr_user].role == Role::Admin))
+            if (users.find(userId) == users.end()){
+                response["error"] = "User not found";
+                resp->SetBody(response.dump());
+                resp->content_type = APPLICATION_JSON;
+                return 404;
+            }
+
+            if (!request.contains("name") || !request.contains("Role") || !request.contains("info")){
+                throw std::exception();
+            }
+
+            if (login == userId || users[login].role == "admin")
             {
                 users[userId].name = request["name"].get<std::string>();
                 users[userId].password = pass;
                 users[userId].info = request["info"].get<std::string>();
-                users[userId].role = request["Role"].get<Role>();
+                users[userId].role = request["Role"].get<std::string>();
             }
-            else
-                throw std::exception();
+            else{
+                response["error"] = "Access denied";
+                resp->SetBody(response.dump());
+                resp->content_type = APPLICATION_JSON;
+                return 403;
+            }
             
-            response["msg"] = "User added successfully";
+            response["msg"] = "User change successfully";
         }
         catch(const std::exception& e)
         {

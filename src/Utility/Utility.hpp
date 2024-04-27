@@ -5,11 +5,6 @@
 #include <string>
 #include <vector>
 
-enum class Role {
-    Admin,
-    User
-};
-
 namespace utils
 {
     std::string EncodeBase64(const std::string &txt);

@@ -1,323 +1,390 @@
-#include <requests.h>
 #include "Utility.hpp"
+#include <requests.h>
 
-using namespace std;
-
-void add(){
-    http_headers head;
-        std::string name;
-        std::string pass;
-        std::string who;
-        std::string data;
-        cin>>name;
-        cin>>pass;
-        cin>>who;
-        cin>>data;
-        string namepass = name+":"+pass;       
-
-        head["Authorization"] =  "Basic "+utils::EncodeBase64(namepass);
-
-        string json = "{\"who\":\""+who+"\",\"data\":\""+data+"\"}";
-
-        auto resp = requests::post("0.0.0.0:7777/user", json, head);
-        if (resp == NULL) {
-            printf("request failed!\n");
-        } else {
-             auto request = nlohmann::json::parse(resp->body);
-             cout<<request["msg"].get<string>()<<endl;
-            //printf("%s\n", resp->body.c_str());
-        }
-
-}
-
-void findall(){
-    auto resp = requests::get("0.0.0.0:7777/users");
-                if (resp == NULL) {
-                    printf("request failed!\n");
-                } else {
-                    //printf("%s\n", resp->body.c_str());
-                     
-     if(resp->status_code==200){
-        auto request = nlohmann::json::parse(resp->body);
-                    for(long unsigned int i=0;i<request.size();i++){
-                        //cout<<"#"<<request.at(i)["id"].get<int>();
-                        cout<<"#"<<request.at(i)["id"].get<int>()<<"Name"<< request.at(i)["client"].get<string>()<<"Role"<< request.at(i)["who"].get<string>()<<"Info"<< request.at(i)["data"].get<string>()<<endl;
-                    }
-     }
-     else{
-        cout<<"Error"<<endl;
-     }
-                    
-                }
-}
-
-int current_user=-1;
-
-void login(){
-    http_headers head;
-        std::string name;
-        std::string pass;
-
-        cin>>name;
-        cin>>pass;
-
-        string namepass = name+":"+pass;       
-
-        head["Authorization"] =  "Basic "+utils::EncodeBase64(namepass);
-
-        string json = "";
-
-        auto resp = requests::post("0.0.0.0:7777/login", json, head);
-        if (resp == NULL) {
-            printf("request failed!\n");
-        } else {
-            //printf("%s\n", resp->body.c_str());
-            auto request = nlohmann::json::parse(resp->body);
-            cout<<request["msg"].get<string>()<<endl;
-            current_user = request["id"].get<int>();
-            cout<<current_user<<endl;
-        }
-
-}
-
-void logout(){
-    if (current_user!=-1)
-   {
-        current_user=-1;
-        cout<<"Logout successful"<<endl;
-   }
-   else
-   {
-       cout<<"Not logged in"<<endl;
-   }
-}
-
-void whoami(){
-    if (current_user!=-1)
-   {        
-            string h = to_string(current_user);
-            string str = "0.0.0.0:7777/user/" + h;
-            const char* a = str.c_str();
-            auto resp = requests::get(a);
-            //cout<<a<<endl;
-
-                if (resp == NULL) {
-                    printf("request failed!\n");
-                } else {
-                    //printf("%s\n", resp->body.c_str());
-                     auto request = nlohmann::json::parse(resp->body);
-     
-                    //for(long unsigned int i=0;i<request.size();i++){
-                        //cout<<"#"<<request.at(i)["id"].get<int>();
-                        cout<<"Name "<< request["client"].get<string>()<<endl;
-                    //}
-                    
-                }
-       //response["msg"] = "Logged in as: " + current_user;
-   }
-   else
-   {
-       cout<<"Not logged in"<<endl;
-   }
-}
-
-void findone(){
-            string h;
-            cin>>h;
-            string str = "0.0.0.0:7777/user/" + h;
-            const char* a = str.c_str();
-            auto resp = requests::get(a);
-            //cout<<a<<endl;
-
-                if (resp == NULL) {
-                    printf("request failed!\n");
-                } else {
-                    //printf("%s\n", resp->body.c_str());
-                     auto request = nlohmann::json::parse(resp->body);
-                    if(resp->status_code==200){
-                            cout<<"# "<<request["id"].get<int>()<<"Name "<< request["client"].get<string>()<<"Role "<< request["who"].get<string>()<<"Info "<< request["data"].get<string>()<<endl;
-                    }
-                    else{
-                        cout<<"Error"<<endl;
-                    }
-                    //for(long unsigned int i=0;i<request.size();i++){
-                        //cout<<"#"<<request.at(i)["id"].get<int>();
-                        
-        }
-}
-
-void del(){
-
-        http_headers head;
-        string namepass = current_user+":123";       
-        head["Authorization"] =  "Basic "+utils::EncodeBase64(namepass);
-        string json = "";
-
-            string h;
-            cin>>h;
-            
-            string str = "0.0.0.0:7777/user/" + h;
-            const char* a = str.c_str();
-            auto resp = requests::Delete(a, head);
-            //cout<<a<<endl;
-
-                if (resp == NULL) {
-                    printf("request failed!\n");
-                } 
-                else {
-                    //printf("%s\n", resp->body.c_str());
-                     auto request = nlohmann::json::parse(resp->body);
-                    if(resp->status_code==200){
-                            cout<<request["msg"].get<string>()<<endl;
-                            if(atoi(h.c_str())==current_user){
-                                current_user=-1;
-                            }
-                            cout<<current_user<<endl;
-                    }
-                    else{
-                        cout<<"Error"<<endl;
-                    }
-                }
-}
-
-void change(){
-    http_headers head;      
-
-            string h;
-            cin>>h;
-
-string str = "0.0.0.0:7777/user/" + h;
-            const char* a = str.c_str();
-            auto resp = requests::get(a);
-            //cout<<a<<endl;
-
-                if (resp == NULL) {
-                    printf("request failed!\n");
-                } else {
-                    //printf("%s\n", resp->body.c_str());
-                     auto request = nlohmann::json::parse(resp->body);
-                    if(resp->status_code==200){
+void Sign_up();
+void Sign_in();
+void Print_all();
+void Print_one();
+void Change();
+void Delete();
+void Whoami();
+void Log_out();
 
 
-        std::string name;
-        std::string pass;
-        std::string who;
-        std::string data;
-        cin>>name;
-        cin>>pass;
-        cin>>who;
-        cin>>data;
-            
-        string namepass = name+":"+pass;       
-
-        head["Authorization"] =  "Basic "+utils::EncodeBase64(namepass);
-
-        string json = "{\"who\":\""+who+"\",\"data\":\""+data+"\",\"id\":\""+to_string(current_user)+"\"}";
-
-
-            string str = "0.0.0.0:7777/user/" + h;
-            const char* a = str.c_str();
-            auto resp = requests::put(a, json, head);
-
-
-
-
-            //cout<<a<<endl;
-
-                if (resp == NULL) {
-                    printf("request failed!\n");
-                    //printf("%s\n", resp->body.c_str());
-                     
-                }
-                else{
-                    auto request = nlohmann::json::parse(resp->body);
-                    if(resp->status_code==200){
-                            cout<<request["msg"].get<string>()<<endl;
-                    }
-                    else{
-                        cout<<"Error"<<endl;
-                    }
-                }
-
-        }
-        else{
-            cout<<"Error"<<endl;
-        }
-
-    }
-}
+std::string current_user;
 
 int main(int argc, char *argv[])
 {
+    int command=0;
 
- 
-
-    if ( (argc == 2) && stricmp( argv[1], "2" ) == 0 )
-    {
-
-               int command=0;
-        int exit=1;
-    while (exit==1) {
-
-        std::cout << "Введите команду: ";
-        cin>>command;
-
-//login+ logout add+ findall+ findone delete change whoami
-        switch(command){
-            case 1://login+
-                login();
-                break;
-
-            case 2://logout+
-                logout();
-                break;
-
-            case 3://add+
-                add();
-                break;
-
-            case 4://findall+
-                findall();               
-                break;
-
-            case 5://find one+
-                findone();
-                break;
-
-            case 6://delete
-            if(current_user==-1){
-                    cout<<"Sign in,please"<<endl;
+    while (command != -1) {
+        try
+        {
+            std::cout << "Choose one of the suggested ones:" << std::endl
+            << "1. Sign up" << std::endl
+            << "2. Sign in" << std::endl
+            << "3. Show all users" << std::endl 
+            << "4. Show one user" << std::endl 
+            << "5. Change a user" << std::endl 
+            << "6. Delete a user" << std::endl 
+            << "7. Who am i" << std::endl 
+            << "8. Sign out" << std::endl 
+            << "9. Exit" << std::endl;
+            (std::cin >> command).get();
+            if (std::cin.fail())
+            {
+                std::cin.clear();
+                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                throw std::invalid_argument("Wrong number");
             }
-            else{
-                    del();
+
+            switch(command){
+                case 1:
+                    Sign_up();
+                    break;
+
+                case 2:
+                    Sign_in();
+                    break;
+
+                case 3:
+                    Print_all();
+                    break;
+
+                case 4:
+                    Print_one();
+                    break;
+
+                case 5:
+                    Change();
+                    break;
+
+                case 6:
+                    Delete();
+                    break;
+
+                case 7:
+                    Whoami();
+                    break;
+
+                case 8:
+                    Log_out();
+                    break;
+
+                case 9:
+                    command = -1;
+                    break;
+                default:
+                    break;
             }
-                
-                break;
-
-            case 7://change
-            if(current_user==-1){
-                    cout<<"Sign in,please"<<endl;
-            }
-            else{
-                change();
-                }
-                break;
-
-            case 8://whoami+
-                whoami();
-                break;
-
-            case 0:
-                exit=0;
-                 break;
         }
+        catch (std::invalid_argument& ex)
+        {
+            std::cout << "invalid_argument: " << ex.what() << std::endl;
+        }
+        catch (const std::exception& e)
+        {
+            std::cout << e.what() << std::endl;
+        }
+        
+            std::cout << std::endl << std::endl;
     }
 
+    return 0;
+}
+
+void Sign_up(){
+    std::string login, pass, name, info, role;
+
+    std::cout << "Enter your login" << std::endl;
+    std::cin >> login;
+    
+    std::cout << "Enter your password" << std::endl;
+    std::cin >> pass;
+
+    std::cout << "Enter your username" << std::endl;
+    std::cin >> name;
+
+    std::cout << "admin or user?" << std::endl;
+    std::cin >> role;
+    if (role != "admin")
+        role = "user";
+
+    std::cout << "Enter your info" << std::endl;
+    std::cin >> info;
+
+    std::string name_pass = login+":"+pass;
+
+    http_headers head;
+    head["Authorization"] = "Basic " + utils::EncodeBase64(name_pass);
+
+    nlohmann::json body;
+    body["name"] = name;
+    body["Role"] = role;
+    body["info"] = info;
+
+    auto resp = requests::post("0.0.0.0:7777/user", body.dump(), head);
+    if (resp == NULL) {
+        std::cout << "request failed!" << std::endl;
+    } else if (resp->status_code != 200){
+            auto response = nlohmann::json::parse(resp->body);
+            std::string error = "Error " + std::to_string(resp->status_code) + ": " + response["error"].get<std::string>();
+            std::cout << error << std::endl;
+    }
+    else{
+        auto response = nlohmann::json::parse(resp->body);
+        current_user = utils::EncodeBase64(name_pass);
+        std::cout << response["msg"].get<std::string>() << std::endl;
+    }
+}
+
+
+
+void Sign_in(){
+    std::string login;
+    std::string pass;
+
+    std::cout << "Enter your login" << std::endl;
+    std::cin >> login;
+    
+    std::cout << "Enter your password" << std::endl;
+    std::cin >> pass;
+
+    std::string name_pass = login+":"+pass;       
+
+    http_headers head;
+    head["Authorization"] =  "Basic " + utils::EncodeBase64(name_pass);
+
+    auto resp = requests::post("0.0.0.0:7777/login", "", head);
+
+    if (resp == NULL) {
+        std::cout << "request failed!" << std::endl;
+    } else if (resp->status_code != 200){
+            auto response = nlohmann::json::parse(resp->body);
+            std::string error = "Error " + std::to_string(resp->status_code) + ": " + response["error"].get<std::string>();
+            std::cout << error << std::endl;
+    }
+    else{
+        auto response = nlohmann::json::parse(resp->body);
+        current_user = utils::EncodeBase64(name_pass);
+        std::cout << response["msg"].get<std::string>() << std::endl;
+    }
+}
+
+void Print_all(){
+
+    if (current_user.empty()){
+        std::cout << "Sign in, please" << std::endl;
+        return;
+    }
+
+    http_headers head;
+    head["Authorization"] =  "Basic " + current_user;
+    
+    auto resp = requests::get("0.0.0.0:7777/users", head);
+    
+    if (resp == NULL) {
+        std::cout << "request failed!" << std::endl;
+    } else if (resp->status_code != 200){
+            auto response = nlohmann::json::parse(resp->body);
+            std::string error = "Error " + std::to_string(resp->status_code) + ": " + response["error"].get<std::string>();
+            std::cout << error << std::endl;
+    }
+    else{
+        auto response = nlohmann::json::parse(resp->body);
         
-        return 0;
+        if (response.contains("msg"))
+            std::cout << response["msg"].get<std::string>() << std::endl;
+        else{
+            for(long unsigned int i=0; i<response.size(); i++){
+                std::cout << i << ") ";
+
+                for (auto it = response.at(i).begin(); it != response.at(i).end(); ++it)
+                {
+                    std::cout << it.key() << ": " << it.value() << ", ";
+                }
+                std::cout << std::endl;
+            }
+        }
+    }
+}
+
+void Print_one(){
+    std::string login;
+
+    std::cout << "Enter login" << std::endl;
+    std::cin >> login;
+
+    std::string str = "0.0.0.0:7777/user/" + login;
+    const char* a = str.c_str();
+    auto resp = requests::get(a);
+
+    if (resp == NULL) {
+        std::cout << "request failed!" << std::endl;
+    } else if (resp->status_code != 200){
+            auto response = nlohmann::json::parse(resp->body);
+            std::string error = "Error " + std::to_string(resp->status_code) + ": " + response["error"].get<std::string>();
+            std::cout << error << std::endl;
+    }
+    else{
+        auto response = nlohmann::json::parse(resp->body);
+        
+        for (auto it = response.begin(); it != response.end(); ++it)
+        {
+            std::cout << it.key() << ": " << it.value() << std::endl;
+        }
+    }
+}
+
+void Change(){
+
+    if (current_user.empty()){
+        std::cout << "Sign in, please" << std::endl;
+        return;
+    }
+
+    std::string find_login;
+
+    std::cout << "Enter the login of the user you want to change" << std::endl;
+    std::cin >> find_login;
+    
+    std::string str = "0.0.0.0:7777/user/" + find_login;
+    const char* a = str.c_str();
+    auto resp = requests::get(a);
+
+    if (resp == NULL) {
+        std::cout << "request failed!" << std::endl;
+        return;
+    } 
+    else if (resp->status_code != 200){
+            auto response = nlohmann::json::parse(resp->body);
+            std::string error = "Error " + std::to_string(resp->status_code) + ": " + response["error"].get<std::string>();
+            std::cout << error << std::endl;
+            return;
+    }
+
+    std::string login, pass, name, info, role;
+
+    std::cout << "Enter new password" << std::endl;
+    std::cin >> pass;
+
+    std::cout << "Enter new username" << std::endl;
+    std::cin >> name;
+
+    std::cout << "admin or user?" << std::endl;
+    std::cin >> role;
+    if (role != "admin")
+        role = "user";
+
+    std::cout << "Enter new info" << std::endl;
+    std::cin >> info;
+
+    http_headers head;
+    head["Authorization"] = "Basic " + current_user;
+    
+    nlohmann::json body;
+    body["name"] = name;
+    body["password"] = utils::EncodeBase64(pass);
+    body["Role"] = role;
+    body["info"] = info;
+
+    resp = requests::put(a, body.dump(), head);
+
+    if (resp == NULL) {
+        std::cout << "request failed!" << std::endl;
+    } else if (resp->status_code != 200){
+            auto response = nlohmann::json::parse(resp->body);
+            std::string error = "Error " + std::to_string(resp->status_code) + ": " + response["error"].get<std::string>();
+            std::cout << error << std::endl;
+    }
+    else{
+        auto response = nlohmann::json::parse(resp->body);
+        std::cout << response["msg"].get<std::string>() << std::endl;
+    }
+
+    
+}
+
+void Delete(){
+    http_headers head;
+    head["Authorization"] =  "Basic " + current_user;
+    
+    std::string find_login;
+
+    std::cout << "Enter the login of the user you want to delete" << std::endl;
+    std::cin >> find_login;
+            
+    std::string str = "0.0.0.0:7777/user/" + find_login;
+    const char* a = str.c_str();
+    auto resp = requests::Delete(a, head);
+
+    if (resp == NULL) {
+        std::cout << "request failed!" << std::endl;
+    } else if (resp->status_code != 200){
+            auto response = nlohmann::json::parse(resp->body);
+            std::string error = "Error " + std::to_string(resp->status_code) + ": " + response["error"].get<std::string>();
+            std::cout << error << std::endl;
+    }
+    else{
+        auto response = nlohmann::json::parse(resp->body);
+        std::cout << response["msg"].get<std::string>() << std::endl;
+        
+        auto decode = utils::DecodeBase64(current_user);
+        auto splitted_auth = utils::Split(decode, ":");
+
+        if (splitted_auth.size() == 2)
+        {
+            if (splitted_auth.front() == find_login)
+                current_user.clear();
+        }
+        else
+            throw std::exception();
+    }
+}
+
+void Log_out(){
+    if (!current_user.empty())
+    {
+        current_user.clear();
+        std::cout << "Logout successful" << std::endl;
     }
     else
     {
-        return 0;
+        std::cout << "Not logged in" << std::endl;
+    }
+}
+
+void Whoami(){
+    if (current_user.empty())
+    {
+        std::cout << "Not logged in" << std::endl;
+        return;
+    }
+    
+    auto decode = utils::DecodeBase64(current_user);
+    auto splitted_auth = utils::Split(decode, ":");
+
+    if (splitted_auth.size() != 2)
+    {
+        throw std::exception();
+    }
+        
+    std::string str = "0.0.0.0:7777/user/" + splitted_auth.front();
+    const char* a = str.c_str();
+    auto resp = requests::get(a);
+
+    if (resp == NULL) {
+        std::cout << "request failed!" << std::endl;
+    } else if (resp->status_code != 200){
+            auto response = nlohmann::json::parse(resp->body);
+            std::string error = "Error " + std::to_string(resp->status_code) + ": " + response["error"].get<std::string>();
+            std::cout << error << std::endl;
+    }
+    else{
+        auto response = nlohmann::json::parse(resp->body);
+        
+            std::cout << "Login: " << splitted_auth.front() << std::endl
+            << "Name: " << response["name"].get<std::string>() << std::endl;
+        
     }
 }
