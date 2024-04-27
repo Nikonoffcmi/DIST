@@ -6,20 +6,15 @@ int main(int argc, char *argv[])
     if ( (argc == 2) && stricmp( argv[1], "2" ) == 0 )
     {
         auto resp = requests::get("http://www.example.com");
-        if (resp == NULL) {
-            printf("request failed!\n");
-        } else {
-            printf("%s\n", resp->body.c_str());
-        }
         http_headers head;
         head["Authorization"] =  "";
-        resp = requests::post("127.0.0.1:8080/echo", "hello,world!", head);
+        http_body body = "{\"client\":\"us1\",\"pass\":\"123\",\"who\":\"admin\",\"data\":\"hi\"}";
+        resp = requests::post("0.0.0.0:7777/user", body);
         if (resp == NULL) {
             printf("request failed!\n");
         } else {
             printf("%s\n", resp->body.c_str());
         }
-
         return 0;
     }
     else
