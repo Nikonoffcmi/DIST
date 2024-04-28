@@ -307,14 +307,14 @@ void route::RegisterResources(hv::HttpService &router)
                 return 404;
             }
 
-            if (!request.contains("name") || !request.contains("Role") || !request.contains("info")){
+            if (!request.contains("name") || !request.contains("Role") || !request.contains("info") || !request.contains("password")){
                 throw std::exception();
             }
 
             if (login == userId || users[login].role == "admin")
             {
                 users[userId].name = request["name"].get<std::string>();
-                users[userId].password = pass;
+                users[userId].password = utils::DecodeBase64(request["password"].get<std::string>());
                 users[userId].info = request["info"].get<std::string>();
                 users[userId].role = request["Role"].get<std::string>();
             }
