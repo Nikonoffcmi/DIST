@@ -19,17 +19,14 @@ int main(int argc, char *argv[])
 
     while (command != -1) {
         try
-        {
+        {        
             std::cout << "Choose one of the suggested ones:" << std::endl
-            << "1. Sign up" << std::endl
-            << "2. Sign in" << std::endl
-            << "3. Show all users" << std::endl 
-            << "4. Show one user" << std::endl 
-            << "5. Change a user" << std::endl 
-            << "6. Delete a user" << std::endl 
-            << "7. Who am i" << std::endl 
-            << "8. Sign out" << std::endl 
-            << "9. Exit" << std::endl;
+            << "1. Add user" << std::endl 
+            << "2. Show all users" << std::endl 
+            << "3. Show one user" << std::endl 
+            << "4. Change a user" << std::endl 
+            << "5. Delete a user" << std::endl 
+            << "6. Exit" << std::endl;
             (std::cin >> command).get();
             if (std::cin.fail())
             {
@@ -44,34 +41,22 @@ int main(int argc, char *argv[])
                     break;
 
                 case 2:
-                    Sign_in();
-                    break;
-
-                case 3:
                     Print_all();
                     break;
 
-                case 4:
+                case 3:
                     Print_one();
                     break;
 
-                case 5:
+                case 4:
                     Change();
                     break;
 
-                case 6:
+                case 5:
                     Delete();
                     break;
 
-                case 7:
-                    Whoami();
-                    break;
-
-                case 8:
-                    Log_out();
-                    break;
-
-                case 9:
+                case 6:
                     command = -1;
                     break;
                 default:
@@ -119,6 +104,8 @@ void Sign_up(){
     head["Authorization"] = "Basic " + utils::EncodeBase64(name_pass);
 
     nlohmann::json body;
+    body["login"] = login;
+    body["password"] = pass;
     body["name"] = name;
     body["Role"] = role;
     body["info"] = info;
@@ -173,13 +160,18 @@ void Sign_in(){
 
 void Print_all(){
 
-    if (current_user.empty()){
-        std::cout << "Sign in, please" << std::endl;
-        return;
-    }
+    std::string login, pass;
+
+    std::cout << "Enter your login" << std::endl;
+    std::cin >> login;
+    
+    std::cout << "Enter your password" << std::endl;
+    std::cin >> pass;
+
+    std::string name_pass = login+":"+pass;
 
     http_headers head;
-    head["Authorization"] =  "Basic " + current_user;
+    head["Authorization"] = "Basic " + utils::EncodeBase64(name_pass);
     
     auto resp = requests::get("0.0.0.0:7777/users", head);
     
@@ -237,11 +229,18 @@ void Print_one(){
 }
 
 void Change(){
+    std::string login, pass;
 
-    if (current_user.empty()){
-        std::cout << "Sign in, please" << std::endl;
-        return;
-    }
+    std::cout << "Enter your login" << std::endl;
+    std::cin >> login;
+    
+    std::cout << "Enter your password" << std::endl;
+    std::cin >> pass;
+
+    std::string name_pass = login+":"+pass;
+
+    http_headers head;
+    head["Authorization"] = "Basic " + utils::EncodeBase64(name_pass);
 
     std::string find_login;
 
@@ -263,7 +262,7 @@ void Change(){
             return;
     }
 
-    std::string login, pass, name, info, role;
+    std::string name, info, role;
 
     std::cout << "Enter new password" << std::endl;
     std::cin >> pass;
@@ -278,10 +277,7 @@ void Change(){
 
     std::cout << "Enter new info" << std::endl;
     std::cin >> info;
-
-    http_headers head;
-    head["Authorization"] = "Basic " + current_user;
-    
+        
     nlohmann::json body;
     body["name"] = name;
     body["password"] = utils::EncodeBase64(pass);
@@ -306,9 +302,19 @@ void Change(){
 }
 
 void Delete(){
-    http_headers head;
-    head["Authorization"] =  "Basic " + current_user;
+    std::string login, pass;
+
+    std::cout << "Enter your login" << std::endl;
+    std::cin >> login;
     
+    std::cout << "Enter your password" << std::endl;
+    std::cin >> pass;
+
+    std::string name_pass = login+":"+pass;
+
+    http_headers head;
+    head["Authorization"] = "Basic " + utils::EncodeBase64(name_pass);
+
     std::string find_login;
 
     std::cout << "Enter the login of the user you want to delete" << std::endl;

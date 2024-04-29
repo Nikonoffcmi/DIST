@@ -23,39 +23,16 @@ void route::RegisterResources(hv::HttpService &router)
         try
         {
             User user;
-            std::string login;
-            auto basic_auth = req->GetHeader("Authorization");
-
-            if (!basic_auth.empty())
-            {
-                auto splitted_header = utils::Split(basic_auth, " ");
-
-                if (splitted_header.size() == 2 && splitted_header.front() == "Basic")
-                {
-                    auto decode = utils::DecodeBase64(splitted_header.back());
-                    auto splitted_auth = utils::Split(decode, ":");
-
-                    if (splitted_auth.size() == 2)
-                    {
-                        login = splitted_auth.front();
-                        user.password = splitted_auth.back();
-                    }
-                    else
-                        throw std::exception();
-                }
-                else
-                    throw std::exception();
-            }
-            else
-                throw std::exception();
 
             request = nlohmann::json::parse(req->body);
-            if (request.contains("name") && request.contains("Role") && request.contains("info"))
+            if (request.contains("name") && request.contains("Role") && request.contains("info")
+            && request.contains("login") && request.contains("password"))
             {
+                user.password = request["password"].get<std::string>();
                 user.name = request["name"].get<std::string>();
                 user.info = request["info"].get<std::string>();
                 user.role = request["Role"].get<std::string>();
-                users[login] = user;
+                users[request["login"].get<std::string>()] = user;
             }
             else
                 throw std::exception();
@@ -90,7 +67,6 @@ void route::RegisterResources(hv::HttpService &router)
                 response["name"] = users[userId].name;
                 response["info"] = users[userId].info;
                 response["role"] = users[userId].role;
-
             }
             else
             {
@@ -341,69 +317,5 @@ void route::RegisterResources(hv::HttpService &router)
         return 200;
     });
 
-    router.POST("/login", [](HttpRequest *req, HttpResponse *resp)
-    {
-        nlohmann::json request;
-        nlohmann::json response;
-
-        std::unique_lock<std::mutex> lock(my_mutex);
-
-        try
-        {
-            std::string login;
-            std::string pass;
-
-            auto basic_auth = req->GetHeader("Authorization");
-
-            if (!basic_auth.empty())
-            {
-                auto splitted_header = utils::Split(basic_auth, " ");
-
-                if (splitted_header.size() == 2 && splitted_header.front() == "Basic")
-                {
-                    auto decode = utils::DecodeBase64(splitted_header.back());
-                    auto splitted_auth = utils::Split(decode, ":");
-
-                    if (splitted_auth.size() == 2)
-                    {
-                        login = splitted_auth.front();
-                        pass = splitted_auth.back();
-                    }
-                    else
-                        throw std::exception();
-                }
-                else
-                    throw std::exception();
-            }
-            else
-                throw std::exception();
-
-            if (users.find(login) == users.end()){
-                response["error"] = "User not found";
-                resp->SetBody(response.dump());
-                resp->content_type = APPLICATION_JSON;
-                return 404;
-            }
-
-            if(users[login].password != pass){
-                response["error"] = "Incorrect password";
-                resp->SetBody(response.dump());
-                resp->content_type = APPLICATION_JSON;
-                return 400;
-            }
-            
-            response["msg"] = "Login successful";
-        }
-        catch(const std::exception& e)
-        {
-            response["error"] = "Invalid data";
-            resp->SetBody(response.dump());
-            resp->content_type = APPLICATION_JSON;
-            return 400;
-        }
-
-        resp->SetBody(response.dump());
-        resp->content_type = APPLICATION_JSON;
-        return 200;
-    });
+    
 }
