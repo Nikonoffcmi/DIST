@@ -27,8 +27,6 @@ jobs:
 
       - uses: whisperity/codechecker-analysis-action@v1
         id: codechecker
-        with:
-          logfile: ${{ github.workspace }}/build/compile_commands.json
 
       # Upload the results to the CI.
       - uses: actions/upload-artifact@v3
