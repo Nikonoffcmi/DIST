@@ -4,6 +4,8 @@ project(http-server-client)
 set(TARGET_NAME "http-server")
 set(TARGET_NAME2 "http-client")
 
+find_package(GTest REQUIRED)
+
 set(LIBHV_INCLUDE ${PROJECT_BINARY_DIR}/contrib/libhv/include/hv)
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/contrib)
@@ -46,4 +48,4 @@ add_executable(${TARGET_NAME} ${SOURCES_Server})
 target_link_libraries(${TARGET_NAME} hv_static)
 
 add_executable(${TARGET_NAME2} ${SOURCES_Client})
-target_link_libraries(${TARGET_NAME2} hv_static)
+target_link_libraries(${TARGET_NAME2} hv_static GTest::GTest)

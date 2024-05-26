@@ -1,7 +1,8 @@
 #include "Utility.hpp"
 #include <requests.h>
+#include "gtest/gtest.h"
 
-void Sign_up();
+void Add_user();
 void Sign_in();
 void Print_all();
 void Print_one();
@@ -15,6 +16,12 @@ std::string current_user;
 
 int main(int argc, char *argv[])
 {
+    if ( (argc == 2) && stricmp( argv[1], "UnitTest" ) == 0 )
+    {
+        ::testing::InitGoogleTest();
+        return RUN_ALL_TESTS();
+    }
+
     int command=0;
 
     while (command != -1) {
@@ -37,7 +44,7 @@ int main(int argc, char *argv[])
 
             switch(command){
                 case 1:
-                    Sign_up();
+                    Add_user();
                     break;
 
                 case 2:
@@ -78,7 +85,7 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-void Sign_up(){
+void Add_user(){
     std::string login, pass, name, info, role;
 
     std::cout << "Enter your login" << std::endl;
@@ -125,37 +132,14 @@ void Sign_up(){
     }
 }
 
+TEST(LoginTests, SuccessfulLogin) {
+    std::stringstream ss_add;
+    ss_add << "admin\n123\nadmin\nadmin\nsuperadmin\n";
+    std::cin.rdbuf(ss_add.rdbuf());
 
-
-void Sign_in(){
-    std::string login;
-    std::string pass;
-
-    std::cout << "Enter your login" << std::endl;
-    std::cin >> login;
+    Add_user();
     
-    std::cout << "Enter your password" << std::endl;
-    std::cin >> pass;
-
-    std::string name_pass = login+":"+pass;       
-
-    http_headers head;
-    head["Authorization"] =  "Basic " + utils::EncodeBase64(name_pass);
-
-    auto resp = requests::post("0.0.0.0:7777/login", "", head);
-
-    if (resp == NULL) {
-        std::cout << "request failed!" << std::endl;
-    } else if (resp->status_code != 200){
-            auto response = nlohmann::json::parse(resp->body);
-            std::string error = "Error " + std::to_string(resp->status_code) + ": " + response["error"].get<std::string>();
-            std::cout << error << std::endl;
-    }
-    else{
-        auto response = nlohmann::json::parse(resp->body);
-        current_user = utils::EncodeBase64(name_pass);
-        std::cout << response["msg"].get<std::string>() << std::endl;
-    }
+    EXPECT_TRUE(!current_user.empty());
 }
 
 void Print_all(){
@@ -299,6 +283,28 @@ void Change(){
     }
 
     
+}
+
+TEST(ChangeTests, Successful) {
+
+    
+    std::stringstream ss_change;
+    ss_change << "admin\n123\nadmin\n123\nnot\nadmin\nsp\n";
+    std::cin.rdbuf(ss_change.rdbuf());
+    std::string origin_user[] = {"not", "admin", "sp"};
+
+    Change();
+
+    auto resp = requests::get("0.0.0.0:7777/user/admin");
+    EXPECT_FALSE(resp == NULL);
+    EXPECT_FALSE(resp->status_code != 200);
+
+    auto response = nlohmann::json::parse(resp->body);
+    std::cout << response << std::endl;
+
+    EXPECT_TRUE(origin_user[0] == response["name"].get<std::string>());
+    EXPECT_TRUE(origin_user[1] != response["role"].get<std::string>());
+    EXPECT_TRUE(origin_user[2] == response["info"].get<std::string>());
 }
 
 void Delete(){
