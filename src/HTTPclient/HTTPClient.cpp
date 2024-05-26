@@ -303,7 +303,7 @@ TEST(ChangeTests, Successful) {
     std::cout << response << std::endl;
 
     EXPECT_TRUE(origin_user[0] == response["name"].get<std::string>());
-    EXPECT_TRUE(origin_user[1] != response["role"].get<std::string>());
+    EXPECT_TRUE(origin_user[1] == response["role"].get<std::string>());
     EXPECT_TRUE(origin_user[2] == response["info"].get<std::string>());
 }
 
