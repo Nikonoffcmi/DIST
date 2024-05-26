@@ -24,7 +24,7 @@ jobs:
 
           #build-command: "cd ${{ github.workspace }}/build; cmake --build ."
 
-      name: Upload artifact Code static analyzer bug reports
+      - name: Upload artifact Code static analyzer bug reports
         uses: actions/upload-artifact@v3
         with:
           name: "Code static analyzer bug reports"
