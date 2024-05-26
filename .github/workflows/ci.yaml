@@ -2,7 +2,7 @@ name: CI
 run-name: ${{ github.actor }} run CI
 on: [push]
 jobs:
-  build:
+  Tests:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
@@ -11,7 +11,7 @@ jobs:
       - run: sudo apt-get install g++ make cmake wget
       
       - name: Build
-        run: mkdir -p build && cd build && cmake .. && make
+        run: mkdir -p build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
       
 
       - uses: whisperity/codechecker-analysis-action@v1
