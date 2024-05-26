@@ -14,47 +14,45 @@ jobs:
       - run: sudo apt-get install g++ clang make cmake wget libgtest-dev
       
       - name: Build
-        run: mkdir -p build && cd build && cmake .. && make # -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=OFF
+        run: mkdir -p build && cd build && cmake .. && -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=OFF
       
-      # - name: Code static analyzer
-      #   uses: whisperity/codechecker-analysis-action@v1
-      #   id: codechecker
-      #   with:
-      #     build-command: "cd ${{ github.workspace }}/build; cmake --build ."
+      - name: Code static analyzer
+        uses: whisperity/codechecker-analysis-action@v1
+        id: codechecker
+        with:
+          build-command: "cd ${{ github.workspace }}/build; cmake --build ."
 
-      # - name: Upload artifact Code static analyzer bug reports
-      #   uses: actions/upload-artifact@v3
-      #   with:
-      #     name: "Code static analyzer bug reports"
-      #     path: ${{ steps.codechecker.outputs.result-html-dir }}
+      - name: Upload artifact Code static analyzer bug reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: "Code static analyzer bug reports"
+          path: ${{ steps.codechecker.outputs.result-html-dir }}
       
-      # - name: Start server
-      #   run: ./build/http-server &
+      - name: Start server
+        run: ./build/http-server &
       
-      # - name: Smoke test server
-      #   shell: bash
-      #   run: |
-      #     if ! wget --timeout=5 --tries=1 --spider http://localhost:7777/; then
-      #       exit 1
-      #     fi
+      - name: Smoke test server
+        shell: bash
+        run: |
+          if ! wget --timeout=5 --tries=1 --spider http://localhost:7777/; then
+            exit 1
+          fi
       
-      # - name: Unit Test
-      #   run: ./build/http-client UnitTest
+      - name: Unit Test
+        run: ./build/http-client UnitTest
 
-      # - name: Stop server
-      #   if: failure() || success()
-      #   run: pkill http-server
+      - name: Stop server
+        if: failure() || success()
+        run: pkill http-server
 
       - run: cd ..
-      - run: ls -al
       
       - name: Create debpkj
         run: sh create_debpkg.sh
       
-      - run: ls -al
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
           name: app
-          path: ./http-server-dcsa.deb
+          path: ./http-server-client-dcsa.deb
