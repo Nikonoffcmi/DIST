@@ -16,19 +16,21 @@ jobs:
       - name: Build
         run: mkdir -p build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
       
-
-      - uses: whisperity/codechecker-analysis-action@v1
+      - name: Code static analyzer
+        uses: whisperity/codechecker-analysis-action@v1
         id: codechecker
         with:
           logfile: ${{ github.workspace }}/build/compile_commands.json
 
           #build-command: "cd ${{ github.workspace }}/build; cmake --build ."
 
-      - uses: actions/upload-artifact@v3
+      name: Upload artifact Code static analyzer bug reports
+        uses: actions/upload-artifact@v3
         with:
-          name: "CodeChecker Bug Reports"
+          name: "Code static analyzer bug reports"
           path: ${{ steps.codechecker.outputs.result-html-dir }}
       
+      - run: cd ${{ github.workspace }}/build
       - name: Start server
         run: ./build/http-server &
       
