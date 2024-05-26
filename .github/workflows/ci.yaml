@@ -41,5 +41,5 @@ jobs:
         run: ./build/http-client UnitTest
 
       - name: Stop server
-        if: always()
+        if: pgrep http-server
         run: pkill http-server
