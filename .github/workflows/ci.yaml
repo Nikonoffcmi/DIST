@@ -13,8 +13,8 @@ jobs:
       - run: sudo apt-get update
       - run: sudo apt-get install g++ clang make cmake wget libgtest-dev
       
-      # - name: Build
-      #   run: mkdir -p build && cd build && cmake .. && make # -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+      - name: Build
+        run: mkdir -p build && cd build && cmake .. && make # -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
       
 
       # - uses: whisperity/codechecker-analysis-action@v1
@@ -27,8 +27,8 @@ jobs:
       #     name: "CodeChecker Bug Reports"
       #     path: ${{ steps.codechecker.outputs.result-html-dir }}
       
-      # - name: Start server
-      #   run: ./build/http-server &
+      - name: Start server
+        run: ./build/http-server &
       
       - name: Smoke test server
         shell: bash
@@ -41,5 +41,5 @@ jobs:
         run: ./build/http-client UnitTest
 
       - name: Stop server
-        if: failure()
+        if: failure() || success()
         run: pkill http-server
