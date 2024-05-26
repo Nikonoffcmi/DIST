@@ -10,6 +10,10 @@ add_subdirectory(${PROJECT_SOURCE_DIR}/contrib)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -Werror -Wempty-body -Wredundant-move -O2")
 
+if (CMAKE_C_COMPILER_ID STREQUAL "Clang")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wthread-safety")
+endif()
+
 file(GLOB_RECURSE SOURCES_Server
   ${CMAKE_CURRENT_SOURCE_DIR}/src/Utility/*.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/src/Utility/*.hpp
