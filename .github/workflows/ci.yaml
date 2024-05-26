@@ -40,4 +40,6 @@ jobs:
       - name: Unit Test
         run: ./build/http-client UnitTest
 
-      - run: pkill http-server
+      - name: Stop server
+        if: always()
+        run: pkill http-server
