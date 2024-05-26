@@ -11,7 +11,7 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v4
       - run: sudo apt-get update
-      - run: sudo apt-get install g++ clang make cmake wget
+      - run: sudo apt-get install g++ clang make cmake wget libgtest-dev
       
       - name: Build
         run: mkdir -p build && cd build && cmake .. && make # -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
