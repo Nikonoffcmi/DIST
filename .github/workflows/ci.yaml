@@ -45,6 +45,7 @@ jobs:
         if: failure() || success()
         run: pkill http-server
 
+      - run: cd ..
       - name: Create debpkj
         run: sh create_debpkg.sh
       
