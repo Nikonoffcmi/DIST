@@ -7,8 +7,8 @@ jobs:
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
-      - run: sudo apt-get update
-      - run: sudo apt-get install g++ make cmake wget
+        run: sudo apt-get update
+        run: sudo apt-get install g++ make cmake wget
       - name: build
         run: mkdir -p build && cd build && cmake .. && make
       - name: Smoke test server
