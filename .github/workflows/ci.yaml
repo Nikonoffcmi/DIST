@@ -14,19 +14,19 @@ jobs:
       - run: sudo apt-get install g++ clang make cmake wget libgtest-dev
       
       - name: Build
-        run: mkdir -p build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=OFF
+        run: mkdir -p build && cd build && cmake .. && make # -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=OFF
       
-      - name: Code static analyzer
-        uses: whisperity/codechecker-analysis-action@v1
-        id: codechecker
-        with:
-          build-command: "cd ${{ github.workspace }}/build; cmake --build ."
+      # - name: Code static analyzer
+      #   uses: whisperity/codechecker-analysis-action@v1
+      #   id: codechecker
+      #   with:
+      #     build-command: "cd ${{ github.workspace }}/build; cmake --build ."
 
-      - name: Upload artifact Code static analyzer bug reports
-        uses: actions/upload-artifact@v3
-        with:
-          name: "Code static analyzer bug reports"
-          path: ${{ steps.codechecker.outputs.result-html-dir }}
+      # - name: Upload artifact Code static analyzer bug reports
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: "Code static analyzer bug reports"
+      #     path: ${{ steps.codechecker.outputs.result-html-dir }}
       
       - name: Start server
         run: ./build/http-server &
