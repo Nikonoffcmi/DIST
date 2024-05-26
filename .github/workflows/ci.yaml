@@ -14,7 +14,7 @@ jobs:
         run: mkdir -p build && cd build && cmake .. && make
       
       - name: Start server
-        run: ./build/http-server
+        run: ./build/http-server &
       
       - name: Smoke test server
         shell: bash
@@ -24,7 +24,7 @@ jobs:
           fi
       
       - name: Smoke test client
-        run: ./build/http-client
+        run: ./build/http-client &
       
       - run: pkill http-server
       - run: pkill http-client
