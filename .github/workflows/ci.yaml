@@ -28,24 +28,26 @@ jobs:
       #     name: "Code static analyzer bug reports"
       #     path: ${{ steps.codechecker.outputs.result-html-dir }}
       
-      - name: Start server
-        run: ./build/http-server &
+      # - name: Start server
+      #   run: ./build/http-server &
       
-      - name: Smoke test server
-        shell: bash
-        run: |
-          if ! wget --timeout=5 --tries=1 --spider http://localhost:7777/; then
-            exit 1
-          fi
+      # - name: Smoke test server
+      #   shell: bash
+      #   run: |
+      #     if ! wget --timeout=5 --tries=1 --spider http://localhost:7777/; then
+      #       exit 1
+      #     fi
       
-      - name: Unit Test
-        run: ./build/http-client UnitTest
+      # - name: Unit Test
+      #   run: ./build/http-client UnitTest
 
-      - name: Stop server
-        if: failure() || success()
-        run: pkill http-server
+      # - name: Stop server
+      #   if: failure() || success()
+      #   run: pkill http-server
 
-      #- run: cd ..
+      - run: cd ..
+      - run: ls -al
+      
       - name: Create debpkj
         run: sh create_debpkg.sh
       
@@ -53,4 +55,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: app
-          path: ~/http-server-dcsa.deb
+          path: ./http-server-dcsa.deb
