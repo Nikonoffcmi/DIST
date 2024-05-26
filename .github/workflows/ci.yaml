@@ -14,7 +14,7 @@ jobs:
       - run: sudo apt-get install g++ clang make cmake wget libgtest-dev
       
       - name: Build
-        run: mkdir -p build && cd build && cmake .. && -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=OFF
+        run: mkdir -p build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=OFF
       
       - name: Code static analyzer
         uses: whisperity/codechecker-analysis-action@v1
