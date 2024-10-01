@@ -48,7 +48,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: http-server
-          path: /build/http-server
+          path: ./build/http-server
           retention-days: 5
 
 
