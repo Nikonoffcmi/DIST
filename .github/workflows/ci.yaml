@@ -46,34 +46,6 @@ jobs:
           name: app
           path: ./http-server-client-dcsa.deb
         
-      - name: 'Upload Artifact'
-        uses: actions/upload-artifact@v4
-        with:
-          name: build
-          path: ./build/
-          retention-days: 5
-
-
-
-  push_to_registry:
-    needs: Tests
-    name: Push Docker image to Docker Hub
-    runs-on: ubuntu-latest
-    permissions:
-      packages: write
-      contents: read
-      attestations: write
-      id-token: write
-    steps:
-      - name: Check out the repo
-        uses: actions/checkout@v4
-
-      - name: Download a single artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: build
-          path: ./build
-
       - name: Log in to Docker Hub
         uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
         with:
