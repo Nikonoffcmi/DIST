@@ -69,7 +69,7 @@ jobs:
       - name: Download a single artifact
         uses: actions/download-artifact@v4
         with:
-          name: http-server
+          name: build
           path: ./build
 
       - name: Log in to Docker Hub
