@@ -38,13 +38,20 @@ jobs:
       - name: Create debpkj
         run: sh create_debpkg.sh
       
-
-
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
           name: app
           path: ./http-server-client-dcsa.deb
+        
+      - name: 'Upload Artifact'
+        uses: actions/upload-artifact@v4
+        with:
+          name: http-server
+          path: /build/http-server
+          retention-days: 5
+
+
 
   push_to_registry:
     needs: Tests
@@ -58,6 +65,11 @@ jobs:
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
+
+      - name: Download a single artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: http-server
 
       - name: Log in to Docker Hub
         uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
@@ -87,4 +99,4 @@ jobs:
           subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
-          
+
