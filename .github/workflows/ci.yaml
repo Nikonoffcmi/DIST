@@ -10,8 +10,8 @@ jobs:
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
-      # - run: sudo apt-get update
-      # - run: sudo apt-get install g++ clang make cmake wget libgtest-dev
+      - run: sudo apt-get update
+      - run: sudo apt-get install g++ clang make cmake wget libgtest-dev
       
       # - name: Build
       #   run: mkdir -p build && cd build && cmake .. && make
@@ -66,7 +66,7 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@v4
         
-      - uses: ls -al
+      - run: ls -al
 
       - name: Download a single artifact
         uses: actions/download-artifact@v4
