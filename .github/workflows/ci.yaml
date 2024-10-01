@@ -3,7 +3,7 @@ run-name: ${{ github.actor }} run CI
 env:
   CC: clang
   CXX: clang++
-  REGISTRY: ghcr.io
+  REGISTRY: ghcr.io/nikonoff
   IMAGE_NAME: http-server
 on: [push]
 jobs:
