@@ -3,11 +3,9 @@ run-name: ${{ github.actor }} run CI
 env:
   CC: clang
   CXX: clang++
-  REGISTRY: nikonoff
-  IMAGE_NAME: http-server
 on: [push]
 jobs:
-  Tests:
+  Workflow:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
