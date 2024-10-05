@@ -5,17 +5,36 @@ env:
   CXX: clang++
 on: [push]
 jobs:
-  Workflow:
+  Build:
+    name: Build Project
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
+
       - run: sudo apt-get update
       - run: sudo apt-get install g++ clang make cmake wget libgtest-dev
       
       - name: Build
         run: mkdir -p build && cd build && cmake .. && make
-      
+
+      - name: 'Upload Artifact'
+        uses: actions/upload-artifact@v4
+        with:
+          name: build
+          path: ./build/
+          retention-days: 5
+    
+  Tests:
+    name: Tests 
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download a single artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: build
+          path: ./build
+
       - name: Start server
         run: ./build/http-server &
       
@@ -33,17 +52,42 @@ jobs:
         if: failure() || success()
         run: pkill http-server
 
-      - run: cd ..
-      
+  Debpkj:
+    name: Create deb package 
+    runs-on: ubuntu-latest
+    needs: Tests
+    steps:
+      - name: Download a single artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: build
+          path: ./build
+
       - name: Create debpkj
         run: sh create_debpkg.sh
       
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: app
           path: ./http-server-client-dcsa.deb
-        
+  
+  push_to_docker_registry:
+    name: Push Docker image to Docker Hub
+    runs-on: ubuntu-latest
+    needs: Debpkj
+    permissions:
+      packages: write
+      contents: read
+      attestations: write
+      id-token: write
+    steps:
+      - name: Download a single artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app
+          path: ./http-server-client-dcsa.deb
+
       - name: Log in to Docker Hub
         uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
         with:
