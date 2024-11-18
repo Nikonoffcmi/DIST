@@ -54,9 +54,7 @@ jobs:
 
       - name: Start server
         run: docker compose up -d --build --force-recreate
-      
-      - run: docker ps -a
-      - run: ls -la
+
       - name: Unit Test
         run: ./build/http-client UnitTest
 
