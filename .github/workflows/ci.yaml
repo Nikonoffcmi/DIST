@@ -13,7 +13,7 @@ jobs:
         uses: actions/checkout@v4
 
       - run: sudo apt-get update
-      - run: sudo apt-get install g++ clang make cmake ligpq-dev libgtest-dev
+      - run: sudo apt-get install g++ clang make cmake libpq-dev libgtest-dev
       
       - name: Build
         run: mkdir -p build && cd build && cmake .. && make
