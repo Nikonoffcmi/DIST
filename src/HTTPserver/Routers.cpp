@@ -348,7 +348,6 @@ void route::RegisterResources(hv::HttpService &router)
                 std::cout << "Select failed: " << PQresultErrorMessage(res) << std::endl;
                 throw std::exception();
             } else {
-                PQclear(res);
                 nlohmann::json userJson;
                 
                 if (PQntuples(res) < 1){
@@ -358,6 +357,7 @@ void route::RegisterResources(hv::HttpService &router)
                     return 404;
                 }
                 
+                PQclear(res);
                 if (!request.contains("name") || !request.contains("Role") || !request.contains("info") || !request.contains("password")){
                     throw std::exception();
                 }
