@@ -37,8 +37,11 @@ void route::RegisterResources(hv::HttpService &router)
                 user.role = request["Role"].get<std::string>();
 
                 PGresult *res = NULL;
-                if (ConnectPostgres() == 1) 
+                if (ConnectPostgres() == 1) {
+                    response["error"] = "Conn";
+
                     throw std::exception();
+                }
 
                 
                 std::string bdReq = "insert into users values(DEFAULT, '"+user.name + "', '" + user.password + "', '" + user.role + "', '" + user.info + "');";
@@ -57,7 +60,7 @@ void route::RegisterResources(hv::HttpService &router)
         }
         catch(const std::exception& e)
         {
-            response["error"] = "Invalid data";
+            // response["error"] = "Invalid data";
             resp->SetBody(response.dump());
             resp->content_type = APPLICATION_JSON;
             return 400;
