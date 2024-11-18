@@ -58,7 +58,7 @@ jobs:
 
       - name: Start server
         run: ./dockerCompRefresh.sh
-      - run: docker ps
+      - run: docker ps -a
       - name: Smoke test server
         shell: bash
         run: |
