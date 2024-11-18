@@ -31,7 +31,6 @@ jobs:
     needs: Build
     services:
       postgres:
-        restart: always
         image: postgres
         environment:
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
