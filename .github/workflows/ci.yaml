@@ -29,6 +29,23 @@ jobs:
     name: Tests 
     runs-on: ubuntu-latest
     needs: Build
+    services:
+      postgres:
+        restart: always
+        image: postgres
+        environment:
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          PROJECT_USER_NAME: ${{ secrets.POSTGRES_USER_NAME }}
+          PROJECT_USER_PASSWORD: ${{ secrets.POSTGRES_USER_PASSWORD }}
+          PROJECT_USER_DATABASE_NAME: ${{ secrets.POSTGRES_USER_DATABASE_NAME }}
+        ports:
+          - "0.0.0.0:5432:5432"
+        volumes:
+          - ./init.sh:/docker-entrypoint-initdb.d/init.sh
+          - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+          - ./postgres-data:/var/lib/postgresql/data
+        env_file:
+          - .env
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
