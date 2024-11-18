@@ -33,7 +33,7 @@ services:
       PROJECT_USER_PASSWORD: ${POSTGRES_USER_PASSWORD}
       PROJECT_USER_DATABASE_NAME: ${POSTGRES_USER_DATABASE_NAME}
     ports:
-      - "0.0.0.0:5433:5432"
+      - "0.0.0.0:5432:5432"
     volumes:
       - ./init.sh:/docker-entrypoint-initdb.d/init.sh
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
