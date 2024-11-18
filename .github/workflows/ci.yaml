@@ -52,6 +52,9 @@ jobs:
             POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
             EOF
 
+      - name: Create debpkj
+        run: sh create_debpkg.sh
+        
       - name: Start server
         run: docker compose up -d --build --force-recreate
 
