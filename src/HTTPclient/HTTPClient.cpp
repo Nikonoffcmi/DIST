@@ -272,7 +272,7 @@ TEST(ChangeTests, Successful) {
 
     
     std::stringstream ss_change;
-    ss_change << "admin\n123\n123\nnot\nadmin\nsp\n";
+    ss_change << "admin\n123\admin\n123\nnot\nadmin\nsp\n";
     std::cin.rdbuf(ss_change.rdbuf());
     std::string origin_user[] = {"not", "admin", "sp"};
 
