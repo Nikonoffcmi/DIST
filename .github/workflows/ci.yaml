@@ -52,9 +52,6 @@ jobs:
             POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
             EOF
 
-      - name: Create debpkj
-        run: sh create_debpkg.sh
-        
       - name: Start server
         run: docker compose up -d --build --force-recreate
 
@@ -102,8 +99,8 @@ jobs:
       - name: Download a single artifact
         uses: actions/download-artifact@v4
         with:
-          name: app
-          path: ./http-server-client-dcsa.deb
+          name: build
+          path: ./build
 
       - name: Log in to Docker Hub
         uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
