@@ -57,14 +57,7 @@ jobs:
             EOF
 
       - name: Start server
-        run: ./dockerCompRefresh.sh
-      - run: docker ps
-      - name: Smoke test server
-        shell: bash
-        run: |
-          if ! wget --timeout=5 --tries=1 --spider http://localhost:7777/; then
-            exit 1
-          fi
+        run: docker compose up -d --build --force-recreate
       
       - name: Unit Test
         run: ./build/http-client UnitTest
