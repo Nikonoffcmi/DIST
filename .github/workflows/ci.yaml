@@ -42,10 +42,6 @@ jobs:
       - run: sudo apt-get update
       - run: sudo apt-get install wget
       - run: chmod -R +x ./build 
-      - run: chmod +x ./dockerCompRefresh.sh 
-      
-      - name: Create debpkj
-        run: sh create_debpkg.sh
 
       - name: Add .env
         run: |
@@ -60,6 +56,7 @@ jobs:
         run: docker compose up -d --build --force-recreate
       
       - run: docker ps -a
+      - run: ls -la
       - name: Unit Test
         run: ./build/http-client UnitTest
 
