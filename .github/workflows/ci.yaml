@@ -48,7 +48,8 @@ jobs:
         run: sh create_debpkg.sh
 
       - name: Add .env
-        run: cat << EOF > .env
+        run: |
+            cat << EOF > .env
             POSTGRES_USER_DATABASE_NAME=${{ secrets.POSTGRES_USER_DATABASE_NAME }}
             POSTGRES_USER_NAME=${{ secrets.POSTGRES_USER_NAME }}
             POSTGRES_USER_PASSWORD=${{ secrets.POSTGRES_USER_PASSWORD }}
