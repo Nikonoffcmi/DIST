@@ -42,9 +42,13 @@ jobs:
       - run: sudo apt-get update
       - run: sudo apt-get install wget
       - run: chmod -R +x ./build 
+      - run: chmod +x ./dockerCompRefresh.sh 
+      
+      - name: Create debpkj
+        run: sh create_debpkg.sh
 
       - name: Start server
-        run: ./build/http-server &
+        run: ./dockerCompRefresh.sh
       
       - name: Smoke test server
         shell: bash
@@ -55,10 +59,6 @@ jobs:
       
       - name: Unit Test
         run: ./build/http-client UnitTest
-
-      - name: Stop server
-        if: failure() || success()
-        run: pkill http-server
 
   Debpkj:
     name: Create deb package 

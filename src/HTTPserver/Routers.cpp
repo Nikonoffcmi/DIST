@@ -1,6 +1,8 @@
 #include "Routers.hpp"
 #include "Utility.hpp"
 #include <mutex> 
+#include <postgresql/libpq-fe.h>
+
 
 struct User{
     std::string name;
@@ -9,9 +11,10 @@ struct User{
     std::string role;
 };
 
-std::unordered_map<std::string, User> users;
+// std::unordered_map<std::string, User> users;
 std::mutex my_mutex;
-
+PGconn *conn;
+int ConnectPostgres();
 void route::RegisterResources(hv::HttpService &router)
 {
     router.POST("/user", [](HttpRequest *req, HttpResponse *resp)
@@ -19,20 +22,33 @@ void route::RegisterResources(hv::HttpService &router)
         nlohmann::json request;
         nlohmann::json response;
         std::unique_lock<std::mutex> my_lock(my_mutex);
-
+        
         try
         {
             User user;
 
             request = nlohmann::json::parse(req->body);
             if (request.contains("name") && request.contains("Role") && request.contains("info")
-            && request.contains("login") && request.contains("password"))
+            && request.contains("password"))
             {
                 user.password = request["password"].get<std::string>();
                 user.name = request["name"].get<std::string>();
                 user.info = request["info"].get<std::string>();
                 user.role = request["Role"].get<std::string>();
-                users[request["login"].get<std::string>()] = user;
+
+                PGresult *res = NULL;
+                if (ConnectPostgres() == 1) 
+                    throw std::exception();
+
+                
+                std::string bdReq = "insert into users values(DEFAULT, '"+user.name + "', '" + user.password + "', '" + user.role + "', '" + user.info + "');";
+                res = PQexec(conn, bdReq.c_str());
+                if (PQresultStatus(res) != PGRES_COMMAND_OK) {
+                    std::cout << "Insert into table failed: " << PQresultErrorMessage(res)
+                            << std::endl;
+                    throw std::exception();
+                }
+                PQclear(res);
             }
             else
                 throw std::exception();
@@ -61,20 +77,33 @@ void route::RegisterResources(hv::HttpService &router)
         try
         {
             std::string userId = req->GetParam("userId");
+
+            PGresult *res = NULL;
+                if (ConnectPostgres() == 1) 
+                    throw std::exception();
             
-            if (users.find(userId) != users.end())
-            {
-                response["name"] = users[userId].name;
-                response["info"] = users[userId].info;
-                response["role"] = users[userId].role;
+            std::string dbReq = "select name, role, info from users where name = '" + userId + "';";
+            res = PQexec(conn, dbReq.c_str());
+            if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+                std::cout << "Select failed: " << PQresultErrorMessage(res) << std::endl;
+                throw std::exception();
+            } else {
+                
+                if (PQntuples(res) < 1){
+                    response["error"] = "User not found";
+                    resp->SetBody(response.dump());
+                    resp->content_type = APPLICATION_JSON;
+                    return 404;
+                }
+                else {
+                    for (int i = 0; i < PQntuples(res); i++) {
+                        response["name"] = PQgetvalue(res, i, 0);
+                        response["role"] = PQgetvalue(res, i, 1);
+                        response["info"] = PQgetvalue(res, i, 2);
+                    }
+                }
             }
-            else
-            {
-                response["error"] = "User not found";
-                resp->SetBody(response.dump());
-                resp->content_type = APPLICATION_JSON;
-                return 404;
-            }
+            PQclear(res);
 
         }
         catch(const std::exception& e)
@@ -98,49 +127,30 @@ void route::RegisterResources(hv::HttpService &router)
         std::unique_lock<std::mutex> my_lock(my_mutex);
 
         try{
-
-            std::string login;
-            auto basic_auth = req->GetHeader("Authorization");
-
-            if (!basic_auth.empty())
-            {
-                auto splitted_header = utils::Split(basic_auth, " ");
-
-                if (splitted_header.size() == 2 && splitted_header.front() == "Basic")
-                {
-                    auto decode = utils::DecodeBase64(splitted_header.back());
-                    auto splitted_auth = utils::Split(decode, ":");
-
-                    if (splitted_auth.size() == 2)
-                    {
-                        login = splitted_auth.front();
-                        if (users[login].password != splitted_auth.back())
-                            throw std::exception();
-                    }
-                    else
-                        throw std::exception();
-                }
-                else
+            PGresult *res = NULL;
+                if (ConnectPostgres() == 1) 
                     throw std::exception();
-            }
-
-            if (users.empty())
-            {
-                response["msg"] = "Users not found";
-            }
-            else
-            {    
-                for (auto &user : users)
-                {
-                    nlohmann::json userJson;
-                    if (!login.empty() && users[login].role == "admin")
-                        userJson["login"] = user.first;
-                    userJson["name"] = user.second.name;
-                    userJson["info"] = user.second.info;
-                    userJson["role"] = user.second.role;
-                    response.push_back(userJson);
+            
+            res = PQexec(conn, "select name, role, info from users;");
+            if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+                std::cout << "Select failed: " << PQresultErrorMessage(res) << std::endl;
+                throw std::exception();
+            } else {
+                
+                nlohmann::json userJson;
+                
+                if (PQntuples(res) < 1)
+                    response["msg"] = "Users not found";
+                else {
+                    for (int i = 0; i < PQntuples(res); i++) {
+                        userJson["name"] = PQgetvalue(res, i, 0);
+                        userJson["role"] = PQgetvalue(res, i, 1);
+                        userJson["info"] = PQgetvalue(res, i, 2);
+                        response.push_back(userJson);
+                    }
                 }
             }
+            PQclear(res);
         }
         catch(const std::exception& e)
         {
@@ -166,6 +176,13 @@ void route::RegisterResources(hv::HttpService &router)
             std::string login;
             auto basic_auth = req->GetHeader("Authorization");
 
+            PGresult *res = NULL;
+                if (ConnectPostgres() == 1) 
+                    throw std::exception();
+            
+            std::string role;
+            std::string name;
+
             if (!basic_auth.empty())
             {
                 auto splitted_header = utils::Split(basic_auth, " ");
@@ -178,8 +195,18 @@ void route::RegisterResources(hv::HttpService &router)
                     if (splitted_auth.size() == 2)
                     {
                         login = splitted_auth.front();
-                        if (users[login].password != splitted_auth.back())
+                        std::string dbReq = "select password, role, name from users where name = '" + login + "';";
+                        res = PQexec(conn, dbReq.c_str());
+                        if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+                            std::cout << "Select failed: " << PQresultErrorMessage(res) << std::endl;
                             throw std::exception();
+                        } else {
+                            if (PQgetvalue(res, 0, 0) != splitted_auth.back())
+                                throw std::exception();
+
+                            role = PQgetvalue(res, 0, 1);
+                            name = PQgetvalue(res, 0, 2);
+                        }
                     }
                     else
                         throw std::exception();
@@ -195,25 +222,46 @@ void route::RegisterResources(hv::HttpService &router)
                 return 401;
             }
 
+            PQclear(res);
             std::string userId = req->GetParam("userId");
             
-            if (users.find(userId) == users.end()){
-                response["error"] = "User not found";
-                resp->SetBody(response.dump());
-                resp->content_type = APPLICATION_JSON;
-                return 404;
-            } 
-            if (login == userId || users[login].role == "admin")
-            {
-                users.erase(userId);
-                response["msg"] = "User deleted successfully";
+            std::string dbReq = "select id from users where name = '" + userId + "';";
+            res = PQexec(conn, dbReq.c_str());
+            if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+                std::cout << "Select failed: " << PQresultErrorMessage(res) << std::endl;
+                throw std::exception();
+            } else {
+                
+                nlohmann::json userJson;
+                
+                if (PQntuples(res) < 1){
+                    response["error"] = "User not found";
+                    resp->SetBody(response.dump());
+                    resp->content_type = APPLICATION_JSON;
+                    return 404;
+                }
+                else {
+                    if (name == userId || role == "admin")
+                    {
+                        std::string dbReq = "delete from users where name = '" + userId + "';";
+                        PQclear(res);
+                        res = PQexec(conn, dbReq.c_str());
+                        if (PQresultStatus(res) != PGRES_COMMAND_OK) {
+                            std::cout << "Delete failed: " << PQresultErrorMessage(res) << std::endl;
+                            throw std::exception();
+                        } else {
+                            response["msg"] = "User deleted successfully";
+                        }
+                    }
+                    else{
+                        response["error"] = "Access denied";
+                        resp->SetBody(response.dump());
+                        resp->content_type = APPLICATION_JSON;
+                        return 403;
+                    }
+                }
             }
-            else{
-                response["error"] = "Access denied";
-                resp->SetBody(response.dump());
-                resp->content_type = APPLICATION_JSON;
-                return 403;
-            }
+            PQclear(res);
         }
         catch(const std::exception& e)
         {
@@ -245,6 +293,13 @@ void route::RegisterResources(hv::HttpService &router)
 
             auto basic_auth = req->GetHeader("Authorization");
 
+            PGresult *res = NULL;
+            if (ConnectPostgres() == 1) 
+                throw std::exception();
+            
+            std::string role;
+            std::string name;
+
             if (!basic_auth.empty())
             {
                 auto splitted_header = utils::Split(basic_auth, " ");
@@ -257,8 +312,18 @@ void route::RegisterResources(hv::HttpService &router)
                     if (splitted_auth.size() == 2)
                     {
                         login = splitted_auth.front();
-                        if (users[login].password != splitted_auth.back())
+                        std::string dbReq = "select password, role, name from users where name = '" + login + "';";
+                        res = PQexec(conn, dbReq.c_str());
+                        if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+                            std::cout << "Select failed: " << PQresultErrorMessage(res) << std::endl;
                             throw std::exception();
+                        } else {
+                            if (PQgetvalue(res, 0, 0) != splitted_auth.back())
+                                throw std::exception();
+
+                            role = PQgetvalue(res, 0, 1);
+                            name = PQgetvalue(res, 0, 2);
+                        }
                     }
                     else
                         throw std::exception();
@@ -274,34 +339,54 @@ void route::RegisterResources(hv::HttpService &router)
                 return 401;
             }
 
+            PQclear(res);
             request = nlohmann::json::parse(req->body);
-
-            if (users.find(userId) == users.end()){
-                response["error"] = "User not found";
-                resp->SetBody(response.dump());
-                resp->content_type = APPLICATION_JSON;
-                return 404;
-            }
-
-            if (!request.contains("name") || !request.contains("Role") || !request.contains("info") || !request.contains("password")){
-                throw std::exception();
-            }
-
-            if (login == userId || users[login].role == "admin")
-            {
-                users[userId].name = request["name"].get<std::string>();
-                users[userId].password = utils::DecodeBase64(request["password"].get<std::string>());
-                users[userId].info = request["info"].get<std::string>();
-                users[userId].role = request["Role"].get<std::string>();
-            }
-            else{
-                response["error"] = "Access denied";
-                resp->SetBody(response.dump());
-                resp->content_type = APPLICATION_JSON;
-                return 403;
-            }
             
-            response["msg"] = "User change successfully";
+            std::string dbReq = "select id from users where name = '" + userId + "';";
+            res = PQexec(conn, dbReq.c_str());
+            if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+                std::cout << "Select failed: " << PQresultErrorMessage(res) << std::endl;
+                throw std::exception();
+            } else {
+                PQclear(res);
+                nlohmann::json userJson;
+                
+                if (PQntuples(res) < 1){
+                    response["error"] = "User not found";
+                    resp->SetBody(response.dump());
+                    resp->content_type = APPLICATION_JSON;
+                    return 404;
+                }
+                
+                if (!request.contains("name") || !request.contains("Role") || !request.contains("info") || !request.contains("password")){
+                    throw std::exception();
+                }
+
+                if (name == userId || role == "admin")
+                {
+                    User user;
+                    user.name = request["name"].get<std::string>();
+                    user.password = utils::DecodeBase64(request["password"].get<std::string>());
+                    user.info = request["info"].get<std::string>();
+                    user.role = request["Role"].get<std::string>();
+                    
+                    dbReq = "update users set name = '"+ user.name + "', password = '" + user.password + "', role = '" + user.role + "', info = '" + user.info + "' where name = '" + userId + "';";
+                    res = PQexec(conn, dbReq.c_str());
+                    if (PQresultStatus(res) != PGRES_COMMAND_OK) {
+                        std::cout << "Update failed: " << PQresultErrorMessage(res) << std::endl;
+                        throw std::exception();
+                    } else {
+                        response["msg"] = "User change successfully";
+                    }
+                }
+                else{
+                    response["error"] = "Access denied";
+                    resp->SetBody(response.dump());
+                    resp->content_type = APPLICATION_JSON;
+                    return 403;
+                }
+            }
+            PQclear(res);
         }
         catch(const std::exception& e)
         {
@@ -318,4 +403,21 @@ void route::RegisterResources(hv::HttpService &router)
     });
 
     
+}
+
+int ConnectPostgres() {
+    
+    conn = PQconnectdb("");
+    /* Check to see that the backend connection was successfully made */
+    if (PQstatus(conn) != CONNECTION_OK) {
+        std::cout << "Connection to database failed: " << PQerrorMessage(conn) << std::endl;
+        PQfinish(conn);
+        return 1;
+    } else {
+        std::cout << "Connection to database succeed." << std::endl;
+        return 0;
+    }
+
+    return 0;
+
 }

@@ -43,9 +43,10 @@ execute_process(
     
 include_directories(${SOURCE_DIR_HEADER})
 include_directories(${LIBHV_INCLUDE})
-    
+link_directories(/usr/lib/x86_64-linux-gnu/)
+
 add_executable(${TARGET_NAME} ${SOURCES_Server})
-target_link_libraries(${TARGET_NAME} hv_static)
+target_link_libraries(${TARGET_NAME} hv_static pq)
 
 add_executable(${TARGET_NAME2} ${SOURCES_Client})
 target_link_libraries(${TARGET_NAME2} hv_static GTest::GTest)

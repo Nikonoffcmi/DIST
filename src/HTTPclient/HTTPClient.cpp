@@ -86,16 +86,13 @@ int main(int argc, char *argv[])
 }
 
 void Add_user(){
-    std::string login, pass, name, info, role;
-
-    std::cout << "Enter your login" << std::endl;
-    std::cin >> login;
-    
-    std::cout << "Enter your password" << std::endl;
-    std::cin >> pass;
+    std::string pass, name, info, role;
 
     std::cout << "Enter your username" << std::endl;
     std::cin >> name;
+
+    std::cout << "Enter your password" << std::endl;
+    std::cin >> pass;
 
     std::cout << "admin or user?" << std::endl;
     std::cin >> role;
@@ -105,13 +102,12 @@ void Add_user(){
     std::cout << "Enter your info" << std::endl;
     std::cin >> info;
 
-    std::string name_pass = login+":"+pass;
+    std::string name_pass = name+":"+pass;
 
     http_headers head;
     head["Authorization"] = "Basic " + utils::EncodeBase64(name_pass);
 
     nlohmann::json body;
-    body["login"] = login;
     body["password"] = pass;
     body["name"] = name;
     body["Role"] = role;
@@ -134,7 +130,7 @@ void Add_user(){
 
 TEST(LoginTests, SuccessfulLogin) {
     std::stringstream ss_add;
-    ss_add << "admin\n123\nadmin\nadmin\nsuperadmin\n";
+    ss_add << "admin\n123\nadmin\nsuperadmin\n";
     std::cin.rdbuf(ss_add.rdbuf());
 
     Add_user();
@@ -144,20 +140,7 @@ TEST(LoginTests, SuccessfulLogin) {
 
 void Print_all(){
 
-    std::string login, pass;
-
-    std::cout << "Enter your login" << std::endl;
-    std::cin >> login;
-    
-    std::cout << "Enter your password" << std::endl;
-    std::cin >> pass;
-
-    std::string name_pass = login+":"+pass;
-
-    http_headers head;
-    head["Authorization"] = "Basic " + utils::EncodeBase64(name_pass);
-    
-    auto resp = requests::get("0.0.0.0:7777/users", head);
+    auto resp = requests::get("0.0.0.0:7777/users");
     
     if (resp == NULL) {
         std::cout << "request failed!" << std::endl;
@@ -186,12 +169,12 @@ void Print_all(){
 }
 
 void Print_one(){
-    std::string login;
+    std::string name;
 
-    std::cout << "Enter login" << std::endl;
-    std::cin >> login;
+    std::cout << "Enter name" << std::endl;
+    std::cin >> name;
 
-    std::string str = "0.0.0.0:7777/user/" + login;
+    std::string str = "0.0.0.0:7777/user/" + name;
     const char* a = str.c_str();
     auto resp = requests::get(a);
 
@@ -213,25 +196,25 @@ void Print_one(){
 }
 
 void Change(){
-    std::string login, pass;
+    std::string nameIn, pass;
 
-    std::cout << "Enter your login" << std::endl;
-    std::cin >> login;
+    std::cout << "Enter your name" << std::endl;
+    std::cin >> nameIn;
     
     std::cout << "Enter your password" << std::endl;
     std::cin >> pass;
 
-    std::string name_pass = login+":"+pass;
+    std::string name_pass = nameIn+":"+pass;
 
     http_headers head;
     head["Authorization"] = "Basic " + utils::EncodeBase64(name_pass);
 
-    std::string find_login;
+    std::string find_user;
 
-    std::cout << "Enter the login of the user you want to change" << std::endl;
-    std::cin >> find_login;
+    std::cout << "Enter the name of the user you want to change" << std::endl;
+    std::cin >> find_user;
     
-    std::string str = "0.0.0.0:7777/user/" + find_login;
+    std::string str = "0.0.0.0:7777/user/" + find_user;
     const char* a = str.c_str();
     auto resp = requests::get(a);
 
@@ -289,7 +272,7 @@ TEST(ChangeTests, Successful) {
 
     
     std::stringstream ss_change;
-    ss_change << "admin\n123\nadmin\n123\nnot\nadmin\nsp\n";
+    ss_change << "admin\n123\n123\nnot\nadmin\nsp\n";
     std::cin.rdbuf(ss_change.rdbuf());
     std::string origin_user[] = {"not", "admin", "sp"};
 
@@ -308,25 +291,25 @@ TEST(ChangeTests, Successful) {
 }
 
 void Delete(){
-    std::string login, pass;
+    std::string nameIn, pass;
 
-    std::cout << "Enter your login" << std::endl;
-    std::cin >> login;
+    std::cout << "Enter your name" << std::endl;
+    std::cin >> nameIn;
     
     std::cout << "Enter your password" << std::endl;
     std::cin >> pass;
 
-    std::string name_pass = login+":"+pass;
+    std::string name_pass = nameIn+":"+pass;
 
     http_headers head;
     head["Authorization"] = "Basic " + utils::EncodeBase64(name_pass);
 
-    std::string find_login;
+    std::string find_user;
 
-    std::cout << "Enter the login of the user you want to delete" << std::endl;
-    std::cin >> find_login;
+    std::cout << "Enter the name of the user you want to delete" << std::endl;
+    std::cin >> find_user;
             
-    std::string str = "0.0.0.0:7777/user/" + find_login;
+    std::string str = "0.0.0.0:7777/user/" + find_user;
     const char* a = str.c_str();
     auto resp = requests::Delete(a, head);
 
@@ -346,7 +329,7 @@ void Delete(){
 
         if (splitted_auth.size() == 2)
         {
-            if (splitted_auth.front() == find_login)
+            if (splitted_auth.front() == find_user)
                 current_user.clear();
         }
         else
